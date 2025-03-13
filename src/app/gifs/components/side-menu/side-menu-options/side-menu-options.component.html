@@ -18,5 +18,7 @@
     </div>
   </a>
 
+  } @for (item of giftService.searchHistoryKey(); track $index) {
+  <li>{{ item }}</li>
   }
 </div>

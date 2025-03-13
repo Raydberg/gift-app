@@ -1,5 +1,5 @@
 <div class="grid gril-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
   @for (gift of gifs(); track gift) {
-  <gift-list-item [imageUrl]="gift" />
+  <gift-list-item [imageUrl]="gift.url" />
   }
 </div>
