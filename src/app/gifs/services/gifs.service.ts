@@ -1,41 +1,59 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { environment } from '@enviroments/environment';
 import type { GiphyResponse } from '../interfaces/giphy.interface';
 import { Gif } from '../interfaces/gif.interface';
 import { GifMapper } from '../mapper/gif.mapper';
-import { map, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 
+function loadLocalStorage() {
+  const gifsFromLocalStorage = localStorage.getItem("gifs") ?? '{}'
+  const gifs = JSON.parse(gifsFromLocalStorage)
+  return gifs;
+
+}
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class GifsService {
   constructor() {
     this.loadTrendingGifs()
   }
-  private http = inject(HttpClient)
 
-  trendingGifs = signal<Gif[]>([])
-  trendingGifsLoading = signal(true)
-  searchHistory = signal<Record<string, Gif[]>>({})
-  searchHistoryKey = computed(() => Object.keys(this.searchHistory()))
+  // gifs = signal<Gif[]>(loadLocalStorage())
 
-  loadTrendingGifs() {
+  private http: HttpClient = inject(HttpClient)
+
+  trendingGifs: WritableSignal<Gif[]> = signal<Gif[]>([])
+  trendingGifsLoading: WritableSignal<boolean> = signal(true)
+  //  Creamos nuestra seañal para poder guardar nuestras cookies
+  searchHistory: WritableSignal<Record<string, Gif[]>> = signal<Record<string, Gif[]>>(loadLocalStorage())
+  //Las llavs de nuestras cookies
+  searchHistoryKey: Signal<string[]> = computed(() => Object.keys(this.searchHistory()))
+
+  saveToLocalStorage = effect(() => {
+    const historyString = JSON.stringify(this.searchHistory())
+    localStorage.setItem('gifs', historyString)
+  })
+
+  loadTrendingGifs(): void {
     this.http.get<GiphyResponse>(`${environment.giphyUrl}/gifs/trending`, {
       params: {
         api_key: environment.giphyApiKey,
         limit: 20
       }
+
     }).subscribe((resp) => {
       const gifs = GifMapper.mapGiphyItemsToGifArray(resp.data);
       this.trendingGifs.set(gifs)
       this.trendingGifsLoading.set(false)
-      console.log(gifs)
+      console.log("Gifst de trending", gifs)
       // console.log(resp)
     })
   }
-  searchGifs(query: string) {
+  searchGifs(query: string): Observable<Gif[]> {
     return this.http.get<GiphyResponse>(`${environment.giphyUrl}/gifs/search`, {
       params: {
         api_key: environment.giphyApiKey,
@@ -45,7 +63,9 @@ export class GifsService {
     }).pipe(
       map(({ data }) => data),
       map((items) => GifMapper.mapGiphyItemsToGifArray(items)),
+      //  Efecto secundariio
       tap(items => {
+        //Manejamos nuestro historial
         this.searchHistory.update(history => ({
           ...history,
           [query.toLocaleLowerCase()]: items,
@@ -55,10 +75,17 @@ export class GifsService {
 
     // .subscribe(resp => {
     //   const gifs = GifMapper.mapGiphyItemsToGifArray(resp.data)
-    //   // this.trendingGifs.set(gifs)
-    //   // this.trendingGifsLoading.set(false)
+    // this.trendingGifs.set(gifs)
+    // this.trendingGifsLoading.set(false)
     //   console.log(gifs)
     // })
+
   }
+
+
+  getHistoryGifs(query: string): Gif[] {
+    return this.searchHistory()[query] ?? []
+  }
+
 
 }
