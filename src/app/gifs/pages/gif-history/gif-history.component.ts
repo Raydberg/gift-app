@@ -14,7 +14,7 @@ import { GiftListComponent } from "../../components/gift-list/gift-list.componen
 })
 export default class GifHistoryComponent {
 
-
+ 
   gifService = inject(GifsService)
 
   //Ruta activa

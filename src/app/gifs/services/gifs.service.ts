@@ -25,13 +25,25 @@ export class GifsService {
   // gifs = signal<Gif[]>(loadLocalStorage())
 
   private http: HttpClient = inject(HttpClient)
-
   trendingGifs: WritableSignal<Gif[]> = signal<Gif[]>([])
   trendingGifsLoading: WritableSignal<boolean> = signal(true)
   //  Creamos nuestra seañal para poder guardar nuestras cookies
   searchHistory: WritableSignal<Record<string, Gif[]>> = signal<Record<string, Gif[]>>(loadLocalStorage())
   //Las llavs de nuestras cookies
   searchHistoryKey: Signal<string[]> = computed(() => Object.keys(this.searchHistory()))
+
+  trendingGifGroup = computed<Gif[][]>(() => {
+
+    // Crear arreglos de 3 elementos
+    const groups = [];
+    for (let i = 0; i < this.trendingGifs().length; i += 3) {
+      groups.push(this.trendingGifs().slice(i, i + 3))
+    }
+    console.log(groups)
+
+    return groups;
+
+  })
 
   saveToLocalStorage = effect(() => {
     const historyString = JSON.stringify(this.searchHistory())

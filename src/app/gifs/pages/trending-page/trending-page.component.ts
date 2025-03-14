@@ -17,7 +17,7 @@ import { GifsService } from '@app/gifs/services/gifs.service';
 // ];
 @Component({
   selector: 'app-trending-page',
-  imports: [GiftListComponent],
+  imports: [],
   templateUrl: './trending-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -25,5 +25,7 @@ export default class TrendingPageComponent {
   // imageUrls = signal(imageUrls)
   giftService = inject(GifsService)
   // gifs = computed
+  onScrool(event: Event) {
 
+  }
 }
